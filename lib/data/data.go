@@ -1,6 +1,10 @@
 package data
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
 
 ////// Result
 
@@ -12,12 +16,14 @@ const (
 type result struct {
 	results []int64
 	status  int
+	pos     int64
 }
 
 ////// Pipeline
 
 type pipeline struct {
 	pipes []pipe
+	pos   int64
 }
 
 func (p pipeline) Run(allowed int64) result {
@@ -30,23 +36,24 @@ type pipe interface {
 	Run(allowed int64, pipeline pipeline, pos int) result
 }
 
-type AccumPipe struct {
+type accumPipe struct {
 	result result
 }
 
-func (p *AccumPipe) Run(allowed int64, pipeline pipeline, pos int) result {
+func (p *accumPipe) Run(allowed int64, pipeline pipeline, pos int) result {
 	res := pipeline.pipes[pos-1].Run(allowed, pipeline, pos-1)
 	p.result.results = append(p.result.results, res.results...)
 	p.result.status = res.status
+	p.result.pos = res.pos
 
 	return p.result
 }
 
-type ScanAllPipe struct {
+type scanAllPipe struct {
 	pos int64
 }
 
-func (p *ScanAllPipe) Run(allowed int64, pipeline pipeline, pos int) result {
+func (p *scanAllPipe) Run(allowed int64, pipeline pipeline, pos int) result {
 	res := make([]int64, 0, allowed)
 	end := p.pos + allowed
 	for ; p.pos < end && p.pos < int64(len(_data.data)); p.pos++ {
@@ -60,14 +67,15 @@ func (p *ScanAllPipe) Run(allowed int64, pipeline pipeline, pos int) result {
 	return result{
 		results: res,
 		status:  status,
+		pos:     p.pos,
 	}
 }
 
-type FilterPipe struct {
+type filterPipe struct {
 	filterOn func(int64) bool
 }
 
-func (p FilterPipe) Run(allowed int64, pipeline pipeline, pos int) result {
+func (p filterPipe) Run(allowed int64, pipeline pipeline, pos int) result {
 	res := pipeline.pipes[pos-1].Run(allowed, pipeline, pos-1)
 	filtered := make([]int64, 0, len(res.results)/2)
 
@@ -88,13 +96,15 @@ type data struct {
 }
 
 type shadow struct {
-	items []pipeline
+	items []*pipeline
 }
 
 var _data data
 var _shadow shadow
 
 func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+
 	_data = data{
 		make([]int64, 100),
 	}
@@ -102,20 +112,53 @@ func init() {
 		_data.data[i] = i
 	}
 
-	_shadow = shadow{
-		[]pipeline{
-			pipeline{[]pipe{
-				&ScanAllPipe{},
-				&FilterPipe{func(i int64) bool { return i%2 == 0 }},
-				&AccumPipe{},
-			}},
-		},
-	}
+	_shadow = shadow{make([]*pipeline, 0)}
 }
 
+////// Control
+
 func Step() result {
-	return _shadow.items[0].Run(10)
+	if len(_shadow.items) == 0 {
+		return result{make([]int64, 0), 0, 0}
+	}
+	randPos := rand.Int31n(int32(len(_shadow.items)))
+	pipeline := _shadow.items[randPos]
+	allowed := int64(10)
+	if int32(len(_shadow.items)) > randPos+1 {
+		allowed = _shadow.items[randPos+1].pos - pipeline.pos
+	}
+	if allowed < 0 {
+		panic("allowed < 0")
+	}
+	res := pipeline.Run(allowed)
+	pipeline.pos = res.pos
+
+	return res
 }
+
+////// Query
+
+func Query(pipeline pipeline) {
+	_shadow.items = append(_shadow.items, &pipeline)
+}
+
+func Pipeline(pipes ...pipe) pipeline {
+	return pipeline{pipes, 0}
+}
+
+func ScanAllPipe() pipe {
+	return &scanAllPipe{}
+}
+
+func FilterPipe(f func(int64) bool) pipe {
+	return &filterPipe{f}
+}
+
+func AccumPipe() pipe {
+	return &accumPipe{}
+}
+
+////// Utils
 
 func printData() {
 	fmt.Println(_data.data)
@@ -123,6 +166,7 @@ func printData() {
 
 func printShadow() {
 	for _, pipeline := range _shadow.items {
+		fmt.Printf(" : %v\n", pipeline.pos)
 		for _, pipe := range pipeline.pipes {
 			fmt.Printf("%T ", pipe)
 			fmt.Println(pipe)

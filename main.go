@@ -3,45 +3,45 @@ package main
 import (
 	"fmt"
 
-	"github.com/philipdexter/neolite/lib/query"
+	"github.com/philipdexter/neolite/lib/query/lazy"
 	"github.com/philipdexter/neolite/lib/storage"
 )
 
 func main() {
-	query.InitData(storage.GetData())
+	lazy.InitData(storage.GetData())
 
 	fmt.Println("before")
 	storage.Print()
-	query.Print()
+	lazy.Print()
 
-	query.Query(
-		query.Pipeline(
-			query.ScanAllPipe(),
-			query.FilterPipe(func(i int64) bool { return i%2 == 0 }),
-			query.AccumPipe(),
+	lazy.Query(
+		lazy.Pipeline(
+			lazy.ScanAllPipe(),
+			lazy.FilterPipe(func(i int64) bool { return i%2 == 0 }),
+			lazy.AccumPipe(),
 		))
 
-	query.Query(
-		query.Pipeline(
-			query.ScanAllPipe(),
-			query.AccumPipe(),
+	lazy.Query(
+		lazy.Pipeline(
+			lazy.ScanAllPipe(),
+			lazy.AccumPipe(),
 		))
 
 	fmt.Println("=====")
-	fmt.Println(query.Step())
-	fmt.Println(query.Step())
-	fmt.Println(query.Step())
-	fmt.Println(query.Step())
-	fmt.Println(query.Step())
-	fmt.Println(query.Step())
-	fmt.Println(query.Step())
-	fmt.Println(query.Step())
-	fmt.Println(query.Step())
-	fmt.Println(query.Step())
-	fmt.Println(query.Step())
+	fmt.Println(lazy.Step())
+	fmt.Println(lazy.Step())
+	fmt.Println(lazy.Step())
+	fmt.Println(lazy.Step())
+	fmt.Println(lazy.Step())
+	fmt.Println(lazy.Step())
+	fmt.Println(lazy.Step())
+	fmt.Println(lazy.Step())
+	fmt.Println(lazy.Step())
+	fmt.Println(lazy.Step())
+	fmt.Println(lazy.Step())
 	fmt.Println("=====")
 
 	fmt.Println("after")
 	storage.Print()
-	query.Print()
+	lazy.Print()
 }

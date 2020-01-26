@@ -1,12 +1,18 @@
 package main
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/philipdexter/neolite/lib/query/eager"
 	"github.com/philipdexter/neolite/lib/query/lazy"
 	"github.com/philipdexter/neolite/lib/storage"
 )
+
+var filterFunc = func(n storage.Node) bool {
+	i, _ := strconv.ParseInt(n.Label, 10, 32)
+	return i%2 == 0
+}
 
 func BenchmarkLazy(b *testing.B) {
 	b.StopTimer()
@@ -22,7 +28,7 @@ func BenchmarkLazy(b *testing.B) {
 		lazy.SubmitQuery(
 			lazy.Pipeline(
 				lazy.ScanAllPipe(),
-				lazy.FilterPipe(func(i int64) bool { return i%2 == 0 }),
+				lazy.FilterPipe(filterFunc),
 				lazy.AccumPipe(),
 			))
 		b.StartTimer()
@@ -44,7 +50,7 @@ func BenchmarkEager(b *testing.B) {
 		query :=
 			eager.Pipeline(
 				eager.ScanAllPipe(),
-				eager.FilterPipe(func(i int64) bool { return i%2 == 0 }),
+				eager.FilterPipe(filterFunc),
 				eager.AccumPipe(),
 			)
 		b.StartTimer()

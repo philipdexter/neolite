@@ -7,10 +7,10 @@ import (
 var _data *storage.Data
 
 type result struct {
-	results []int64
+	results []storage.Node
 }
 
-type pipeResult = []int64
+type pipeResult = []storage.Node
 
 func RunQuery(pipeline *pipeline) result {
 	return pipeline.Run()
@@ -18,7 +18,7 @@ func RunQuery(pipeline *pipeline) result {
 
 type pipeline struct {
 	pipes []pipe
-	pos   int64
+	pos   int
 }
 
 func (p pipeline) Run() result {
@@ -33,7 +33,7 @@ type accumPipe struct {
 }
 
 func (p *accumPipe) Run(pipeline pipeline, pos int) pipeResult {
-	res := make([]int64, 0, len(_data.Data))
+	res := make([]storage.Node, 0, len(_data.Data))
 
 	for {
 		x := pipeline.pipes[pos-1].Run(pipeline, pos-1)
@@ -47,15 +47,15 @@ func (p *accumPipe) Run(pipeline pipeline, pos int) pipeResult {
 }
 
 type scanAllPipe struct {
-	pos int64
-	buf []int64
+	pos int
+	buf []storage.Node
 }
 
 func (p *scanAllPipe) Run(pipeline pipeline, pos int) pipeResult {
 	if p.buf == nil {
-		p.buf = make([]int64, 1, 1)
+		p.buf = make([]storage.Node, 1, 1)
 	}
-	if int64(len(_data.Data)) > p.pos {
+	if len(_data.Data) > p.pos {
 		x := _data.Data[p.pos]
 		p.pos++
 		p.buf[0] = x
@@ -65,13 +65,13 @@ func (p *scanAllPipe) Run(pipeline pipeline, pos int) pipeResult {
 }
 
 type filterPipe struct {
-	filterOn func(int64) bool
-	buf      []int64
+	filterOn func(storage.Node) bool
+	buf      []storage.Node
 }
 
 func (p *filterPipe) Run(pipeline pipeline, pos int) pipeResult {
 	if p.buf == nil {
-		p.buf = make([]int64, 1, 1)
+		p.buf = make([]storage.Node, 1, 1)
 	}
 
 	x := pipeline.pipes[pos-1].Run(pipeline, pos-1)
@@ -92,7 +92,7 @@ func ScanAllPipe() pipe {
 	return &scanAllPipe{}
 }
 
-func FilterPipe(f func(int64) bool) pipe {
+func FilterPipe(f func(storage.Node) bool) pipe {
 	return &filterPipe{
 		filterOn: f,
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/philipdexter/neolite/lib/query/eager"
 	"github.com/philipdexter/neolite/lib/query/lazy"
@@ -17,17 +18,22 @@ func main() {
 
 	eager.InitData(storage.GetData())
 
+	filterFunc := func(n storage.Node) bool {
+		i, _ := strconv.ParseInt(n.Label, 10, 32)
+		return i%2 == 0
+	}
+
 	lazy.SubmitQuery(
 		lazy.Pipeline(
 			lazy.ScanAllPipe(),
-			lazy.FilterPipe(func(i int64) bool { return i%2 == 0 }),
+			lazy.FilterPipe(filterFunc),
 			lazy.AccumPipe(),
 		))
 
 	eagerQuery :=
 		eager.Pipeline(
 			eager.ScanAllPipe(),
-			eager.FilterPipe(func(i int64) bool { return i%2 == 0 }),
+			eager.FilterPipe(filterFunc),
 			eager.AccumPipe(),
 		)
 

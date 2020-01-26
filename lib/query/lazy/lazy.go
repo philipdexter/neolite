@@ -16,18 +16,18 @@ const (
 )
 
 type result struct {
-	results []int64
+	results []storage.Node
 	status  int
-	pos     int64
+	pos     int
 }
 
 func Step() result {
 	if len(_shadow.items) == 0 {
-		return result{make([]int64, 0), 0, 0}
+		return result{make([]storage.Node, 0), 0, 0}
 	}
 	randPos := rand.Int31n(int32(len(_shadow.items)))
 	pipeline := _shadow.items[randPos]
-	allowed := int64(10)
+	allowed := 10
 	if int32(len(_shadow.items)) > randPos+1 {
 		allowed = _shadow.items[randPos+1].pos - pipeline.pos
 	}
@@ -42,22 +42,22 @@ func Step() result {
 
 type pipeline struct {
 	pipes []pipe
-	pos   int64
+	pos   int
 }
 
-func (p pipeline) Run(allowed int64) result {
+func (p pipeline) Run(allowed int) result {
 	return *p.pipes[len(p.pipes)-1].Run(allowed, p, len(p.pipes)-1)
 }
 
 type pipe interface {
-	Run(allowed int64, pipeline pipeline, pos int) *result
+	Run(allowed int, pipeline pipeline, pos int) *result
 }
 
 type accumPipe struct {
 	result result
 }
 
-func (p *accumPipe) Run(allowed int64, pipeline pipeline, pos int) *result {
+func (p *accumPipe) Run(allowed int, pipeline pipeline, pos int) *result {
 	res := pipeline.pipes[pos-1].Run(allowed, pipeline, pos-1)
 	p.result.results = append(p.result.results, res.results...)
 	p.result.status = res.status
@@ -67,24 +67,24 @@ func (p *accumPipe) Run(allowed int64, pipeline pipeline, pos int) *result {
 }
 
 type scanAllPipe struct {
-	pos    int64
-	buf    []int64
+	pos    int
+	buf    []storage.Node
 	result result
 }
 
-func (p *scanAllPipe) Run(allowed int64, pipeline pipeline, pos int) *result {
+func (p *scanAllPipe) Run(allowed int, pipeline pipeline, pos int) *result {
 	if p.buf == nil {
-		p.buf = make([]int64, 0, allowed)
+		p.buf = make([]storage.Node, 0, allowed)
 	} else {
 		p.buf = p.buf[:0]
 	}
 	end := p.pos + allowed
-	for ; p.pos < end && p.pos < int64(len(_data.Data)); p.pos++ {
+	for ; p.pos < end && p.pos < len(_data.Data); p.pos++ {
 		p.buf = append(p.buf, _data.Data[p.pos])
 	}
 
 	status := statusNotDone
-	if p.pos == int64(len(_data.Data)) {
+	if p.pos == len(_data.Data) {
 		status = statusDone
 	}
 
@@ -95,14 +95,14 @@ func (p *scanAllPipe) Run(allowed int64, pipeline pipeline, pos int) *result {
 }
 
 type filterPipe struct {
-	filterOn func(int64) bool
-	buf      []int64
+	filterOn func(storage.Node) bool
+	buf      []storage.Node
 }
 
-func (p *filterPipe) Run(allowed int64, pipeline pipeline, pos int) *result {
+func (p *filterPipe) Run(allowed int, pipeline pipeline, pos int) *result {
 	res := pipeline.pipes[pos-1].Run(allowed, pipeline, pos-1)
 	if p.buf == nil {
-		p.buf = make([]int64, 0, allowed)
+		p.buf = make([]storage.Node, 0, allowed)
 	} else {
 		p.buf = p.buf[:0]
 	}
@@ -135,7 +135,7 @@ func ScanAllPipe() pipe {
 	return &scanAllPipe{}
 }
 
-func FilterPipe(f func(int64) bool) pipe {
+func FilterPipe(f func(storage.Node) bool) pipe {
 	return &filterPipe{
 		filterOn: f,
 	}

@@ -4,8 +4,6 @@ import (
 	"fmt"
 )
 
-////// Result
-
 type Data struct {
 	Data []int64
 }

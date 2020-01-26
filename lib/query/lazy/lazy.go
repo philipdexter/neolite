@@ -49,8 +49,6 @@ func (p pipeline) Run(allowed int64) result {
 	return *p.pipes[len(p.pipes)-1].Run(allowed, p, len(p.pipes)-1)
 }
 
-////// Pipes
-
 type pipe interface {
 	Run(allowed int64, pipeline pipeline, pos int) *result
 }

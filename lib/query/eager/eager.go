@@ -6,11 +6,6 @@ import (
 
 var _data *storage.Data
 
-const (
-	statusDone = iota
-	statusNotDone
-)
-
 type result struct {
 	results []int64
 }
@@ -29,8 +24,6 @@ type pipeline struct {
 func (p pipeline) Run() result {
 	return result{p.pipes[len(p.pipes)-1].Run(p, len(p.pipes)-1)}
 }
-
-////// Pipes
 
 type pipe interface {
 	Run(pipeline pipeline, pos int) pipeResult

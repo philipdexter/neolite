@@ -40,7 +40,7 @@ func (p *accumPipe) Run(pipeline pipeline, pos int) pipeResult {
 		if x == nil {
 			break
 		}
-		res = append(res, x...)
+		res = append(res, x[0])
 	}
 
 	return res

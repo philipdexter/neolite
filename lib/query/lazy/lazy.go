@@ -58,6 +58,9 @@ type accumPipe struct {
 }
 
 func (p *accumPipe) Run(allowed int, pipeline pipeline, pos int) *result {
+	if p.result.results == nil {
+		p.result.results = make([]storage.Node, 0, len(_data.Data))
+	}
 	res := pipeline.pipes[pos-1].Run(allowed, pipeline, pos-1)
 	p.result.results = append(p.result.results, res.results...)
 	p.result.status = res.status

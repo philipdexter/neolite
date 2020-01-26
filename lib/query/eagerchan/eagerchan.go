@@ -24,7 +24,7 @@ type pipeline struct {
 func (p pipeline) Run() result {
 	chans := make([]chan pipeResult, len(p.pipes))
 	for i := 0; i < len(p.pipes); i++ {
-		chans[i] = make(chan pipeResult)
+		chans[i] = make(chan pipeResult, 100)
 	}
 	for i := 0; i < len(p.pipes); i++ {
 		if i == 0 {

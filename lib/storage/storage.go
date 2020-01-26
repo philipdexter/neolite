@@ -12,8 +12,8 @@ type Data struct {
 
 var _data Data
 
-func GetData() Data {
-	return _data
+func GetData() *Data {
+	return &_data
 }
 
 func Init(size int) {

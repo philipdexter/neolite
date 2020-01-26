@@ -8,7 +8,7 @@ import (
 	"github.com/philipdexter/neolite/lib/storage"
 )
 
-var _data storage.Data
+var _data *storage.Data
 
 const (
 	statusDone = iota
@@ -114,7 +114,7 @@ type shadow struct {
 	items []*pipeline
 }
 
-func Query(pipeline pipeline) {
+func SubmitQuery(pipeline pipeline) {
 	_shadow.items = append(_shadow.items, &pipeline)
 }
 
@@ -144,11 +144,11 @@ func Print() {
 	}
 }
 
-func init() {
+func Init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	_shadow = shadow{make([]*pipeline, 0)}
 }
 
-func InitData(data storage.Data) {
+func InitData(data *storage.Data) {
 	_data = data
 }

@@ -1,12 +1,14 @@
-package data
+package query
 
 import (
 	"fmt"
 	"math/rand"
 	"time"
+
+	"github.com/philipdexter/neolite/lib/storage"
 )
 
-////// Result
+var _data storage.Data
 
 const (
 	statusDone = iota
@@ -19,7 +21,24 @@ type result struct {
 	pos     int64
 }
 
-////// Pipeline
+func Step() result {
+	if len(_shadow.items) == 0 {
+		return result{make([]int64, 0), 0, 0}
+	}
+	randPos := rand.Int31n(int32(len(_shadow.items)))
+	pipeline := _shadow.items[randPos]
+	allowed := int64(10)
+	if int32(len(_shadow.items)) > randPos+1 {
+		allowed = _shadow.items[randPos+1].pos - pipeline.pos
+	}
+	if allowed < 0 {
+		panic("allowed < 0")
+	}
+	res := pipeline.Run(allowed)
+	pipeline.pos = res.pos
+
+	return res
+}
 
 type pipeline struct {
 	pipes []pipe
@@ -56,12 +75,12 @@ type scanAllPipe struct {
 func (p *scanAllPipe) Run(allowed int64, pipeline pipeline, pos int) result {
 	res := make([]int64, 0, allowed)
 	end := p.pos + allowed
-	for ; p.pos < end && p.pos < int64(len(_data.data)); p.pos++ {
-		res = append(res, _data.data[p.pos])
+	for ; p.pos < end && p.pos < int64(len(_data.Data)); p.pos++ {
+		res = append(res, _data.Data[p.pos])
 	}
 
 	status := statusNotDone
-	if p.pos == int64(len(_data.data)) {
+	if p.pos == int64(len(_data.Data)) {
 		status = statusDone
 	}
 	return result{
@@ -89,54 +108,11 @@ func (p filterPipe) Run(allowed int64, pipeline pipeline, pos int) result {
 	return res
 }
 
-////// Data and Shadow list
-
-type data struct {
-	data []int64
-}
+var _shadow shadow
 
 type shadow struct {
 	items []*pipeline
 }
-
-var _data data
-var _shadow shadow
-
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-
-	_data = data{
-		make([]int64, 100),
-	}
-	for i := int64(0); i < 100; i++ {
-		_data.data[i] = i
-	}
-
-	_shadow = shadow{make([]*pipeline, 0)}
-}
-
-////// Control
-
-func Step() result {
-	if len(_shadow.items) == 0 {
-		return result{make([]int64, 0), 0, 0}
-	}
-	randPos := rand.Int31n(int32(len(_shadow.items)))
-	pipeline := _shadow.items[randPos]
-	allowed := int64(10)
-	if int32(len(_shadow.items)) > randPos+1 {
-		allowed = _shadow.items[randPos+1].pos - pipeline.pos
-	}
-	if allowed < 0 {
-		panic("allowed < 0")
-	}
-	res := pipeline.Run(allowed)
-	pipeline.pos = res.pos
-
-	return res
-}
-
-////// Query
 
 func Query(pipeline pipeline) {
 	_shadow.items = append(_shadow.items, &pipeline)
@@ -158,13 +134,7 @@ func AccumPipe() pipe {
 	return &accumPipe{}
 }
 
-////// Utils
-
-func printData() {
-	fmt.Println(_data.data)
-}
-
-func printShadow() {
+func Print() {
 	for _, pipeline := range _shadow.items {
 		fmt.Printf(" : %v\n", pipeline.pos)
 		for _, pipe := range pipeline.pipes {
@@ -174,7 +144,11 @@ func printShadow() {
 	}
 }
 
-func Print() {
-	printData()
-	printShadow()
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+	_shadow = shadow{make([]*pipeline, 0)}
+}
+
+func InitData(data storage.Data) {
+	_data = data
 }

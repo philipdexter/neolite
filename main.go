@@ -3,40 +3,45 @@ package main
 import (
 	"fmt"
 
-	"github.com/philipdexter/neolite/lib/data"
+	"github.com/philipdexter/neolite/lib/query"
+	"github.com/philipdexter/neolite/lib/storage"
 )
 
 func main() {
-	fmt.Println("before")
-	data.Print()
+	query.InitData(storage.GetData())
 
-	data.Query(
-		data.Pipeline(
-			data.ScanAllPipe(),
-			data.FilterPipe(func(i int64) bool { return i%2 == 0 }),
-			data.AccumPipe(),
+	fmt.Println("before")
+	storage.Print()
+	query.Print()
+
+	query.Query(
+		query.Pipeline(
+			query.ScanAllPipe(),
+			query.FilterPipe(func(i int64) bool { return i%2 == 0 }),
+			query.AccumPipe(),
 		))
 
-	data.Query(
-		data.Pipeline(
-			data.ScanAllPipe(),
-			data.AccumPipe(),
+	query.Query(
+		query.Pipeline(
+			query.ScanAllPipe(),
+			query.AccumPipe(),
 		))
 
 	fmt.Println("=====")
-	fmt.Println(data.Step())
-	fmt.Println(data.Step())
-	fmt.Println(data.Step())
-	fmt.Println(data.Step())
-	fmt.Println(data.Step())
-	fmt.Println(data.Step())
-	fmt.Println(data.Step())
-	fmt.Println(data.Step())
-	fmt.Println(data.Step())
-	fmt.Println(data.Step())
-	fmt.Println(data.Step())
+	fmt.Println(query.Step())
+	fmt.Println(query.Step())
+	fmt.Println(query.Step())
+	fmt.Println(query.Step())
+	fmt.Println(query.Step())
+	fmt.Println(query.Step())
+	fmt.Println(query.Step())
+	fmt.Println(query.Step())
+	fmt.Println(query.Step())
+	fmt.Println(query.Step())
+	fmt.Println(query.Step())
 	fmt.Println("=====")
 
 	fmt.Println("after")
-	data.Print()
+	storage.Print()
+	query.Print()
 }

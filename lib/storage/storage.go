@@ -16,13 +16,13 @@ func GetData() Data {
 	return _data
 }
 
-func init() {
+func Init(size int) {
 
 	_data = Data{
-		make([]int64, 100),
+		make([]int64, size),
 	}
-	for i := int64(0); i < 100; i++ {
-		_data.Data[i] = i
+	for i := 0; i < size; i++ {
+		_data.Data[i] = int64(i)
 	}
 }
 

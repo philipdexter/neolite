@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+	storage.Init(1000)
 	lazy.InitData(storage.GetData())
 
 	fmt.Println("before")

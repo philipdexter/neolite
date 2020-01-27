@@ -10,6 +10,8 @@ import (
 
 var _data *storage.Data
 
+const maxAllowed = 100
+
 const (
 	statusDone = iota
 	statusNotDone
@@ -21,28 +23,48 @@ type result struct {
 	pos     int
 }
 
-func Step() result {
-	if len(_shadow.items) == 0 {
-		return result{make([]storage.Node, 0), 0, 0}
+func isDone() bool {
+	for _, pipeline := range _shadow.items {
+		if pipeline.status == statusNotDone {
+			return false
+		}
 	}
+	return true
+}
+
+func Run() result {
+	var res result = result{make([]storage.Node, 0), statusDone, 0}
+	for !isDone() {
+		res = step()
+	}
+	return res
+}
+
+func step() result {
+	if len(_shadow.items) == 0 {
+		return result{make([]storage.Node, 0), statusDone, 0}
+	}
+
 	randPos := rand.Int31n(int32(len(_shadow.items)))
 	pipeline := _shadow.items[randPos]
-	allowed := 10
-	if int32(len(_shadow.items)) > randPos+1 {
-		allowed = _shadow.items[randPos+1].pos - pipeline.pos
+	allowed := maxAllowed
+	if randPos > 0 {
+		allowed = _shadow.items[randPos-1].pos - pipeline.pos
 	}
 	if allowed < 0 {
 		panic("allowed < 0")
 	}
 	res := pipeline.Run(allowed)
 	pipeline.pos = res.pos
+	pipeline.status = res.status
 
 	return res
 }
 
 type pipeline struct {
-	pipes []pipe
-	pos   int
+	pipes  []pipe
+	pos    int
+	status int
 }
 
 func (p pipeline) Run(allowed int) result {
@@ -77,7 +99,7 @@ type scanAllPipe struct {
 
 func (p *scanAllPipe) Run(allowed int, pipeline pipeline, pos int) *result {
 	if p.buf == nil {
-		p.buf = make([]storage.Node, 0, allowed)
+		p.buf = make([]storage.Node, 0, maxAllowed)
 	} else {
 		p.buf = p.buf[:0]
 	}
@@ -105,7 +127,7 @@ type filterPipe struct {
 func (p *filterPipe) Run(allowed int, pipeline pipeline, pos int) *result {
 	res := pipeline.pipes[pos-1].Run(allowed, pipeline, pos-1)
 	if p.buf == nil {
-		p.buf = make([]storage.Node, 0, allowed)
+		p.buf = make([]storage.Node, 0, maxAllowed)
 	} else {
 		p.buf = p.buf[:0]
 	}
@@ -131,7 +153,7 @@ func SubmitQuery(pipeline pipeline) {
 }
 
 func Pipeline(pipes ...pipe) pipeline {
-	return pipeline{pipes, 0}
+	return pipeline{pipes, 0, statusNotDone}
 }
 
 func ScanAllPipe() pipe {

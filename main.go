@@ -15,7 +15,6 @@ func main() {
 
 	lazy.Init()
 	lazy.InitData(storage.GetData())
-	const steps = 100
 
 	eager.InitData(storage.GetData())
 
@@ -47,15 +46,12 @@ func main() {
 			eagerchan.AccumPipe(),
 		)
 
+	fmt.Println("eager")
 	fmt.Println(eager.RunQuery(&eagerQuery))
 
+	fmt.Println("eagerchan")
 	fmt.Println(eagerchan.RunQuery(&eagerchanQuery))
 
-	for i := 0; i < steps; i++ {
-		if i == steps-1 {
-			fmt.Println(lazy.Step())
-		} else {
-			lazy.Step()
-		}
-	}
+	fmt.Println("lazy")
+	fmt.Println(lazy.Run())
 }

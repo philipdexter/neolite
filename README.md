@@ -1,8 +1,13 @@
 
 # neolite
 
+[github.com/philipdexter/neolite](https://github.com/philipdexter/neolite)
+
+[docs](https://godoc.org/github.com/philipdexter/neolite)
+
 A light version of neo4j
 to explore data-centric laziness
+
 
 ## benchmark results
 

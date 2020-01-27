@@ -10,6 +10,8 @@ import (
 	"github.com/philipdexter/neolite/lib/storage"
 )
 
+const numNodes = 10000
+
 var filterFunc = func(n storage.Node) bool {
 	i, _ := strconv.ParseInt(n.Label, 10, 32)
 	return i%2 == 0
@@ -18,8 +20,7 @@ var filterFunc = func(n storage.Node) bool {
 func BenchmarkLazy(b *testing.B) {
 	b.StopTimer()
 
-	const steps = 100
-	storage.Init(1000)
+	storage.Init(numNodes)
 	lazy.InitData(storage.GetData())
 
 	b.StartTimer()
@@ -32,48 +33,88 @@ func BenchmarkLazy(b *testing.B) {
 				lazy.FilterPipe(filterFunc),
 				lazy.AccumPipe(),
 			))
+		lazy.SubmitQuery(
+			lazy.Pipeline(
+				lazy.ScanAllPipe(),
+				lazy.FilterPipe(filterFunc),
+				lazy.AccumPipe(),
+			))
+		lazy.SubmitQuery(
+			lazy.Pipeline(
+				lazy.ScanAllPipe(),
+				lazy.FilterPipe(filterFunc),
+				lazy.AccumPipe(),
+			))
 		b.StartTimer()
 
-		for j := 0; j < steps; j++ {
-			lazy.Step()
-		}
+		lazy.Run()
 	}
 }
 
 func BenchmarkEager(b *testing.B) {
 	b.StopTimer()
-	storage.Init(1000)
+	storage.Init(numNodes)
 	eager.InitData(storage.GetData())
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
-		query :=
+		query1 :=
+			eager.Pipeline(
+				eager.ScanAllPipe(),
+				eager.FilterPipe(filterFunc),
+				eager.AccumPipe(),
+			)
+		query2 :=
+			eager.Pipeline(
+				eager.ScanAllPipe(),
+				eager.FilterPipe(filterFunc),
+				eager.AccumPipe(),
+			)
+		query3 :=
 			eager.Pipeline(
 				eager.ScanAllPipe(),
 				eager.FilterPipe(filterFunc),
 				eager.AccumPipe(),
 			)
 		b.StartTimer()
-		eager.RunQuery(&query)
+
+		eager.RunQuery(&query1)
+		eager.RunQuery(&query2)
+		eager.RunQuery(&query3)
 	}
 }
 
 func BenchmarkEagerChan(b *testing.B) {
 	b.StopTimer()
-	storage.Init(1000)
+	storage.Init(numNodes)
 	eagerchan.InitData(storage.GetData())
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
-		query :=
+		query1 :=
+			eagerchan.Pipeline(
+				eagerchan.ScanAllPipe(),
+				eagerchan.FilterPipe(filterFunc),
+				eagerchan.AccumPipe(),
+			)
+		query2 :=
+			eagerchan.Pipeline(
+				eagerchan.ScanAllPipe(),
+				eagerchan.FilterPipe(filterFunc),
+				eagerchan.AccumPipe(),
+			)
+		query3 :=
 			eagerchan.Pipeline(
 				eagerchan.ScanAllPipe(),
 				eagerchan.FilterPipe(filterFunc),
 				eagerchan.AccumPipe(),
 			)
 		b.StartTimer()
-		eagerchan.RunQuery(&query)
+
+		eagerchan.RunQuery(&query1)
+		eagerchan.RunQuery(&query2)
+		eagerchan.RunQuery(&query3)
 	}
 }

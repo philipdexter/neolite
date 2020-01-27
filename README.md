@@ -16,9 +16,9 @@ $ go test -bench=. -benchmem
 goos: linux
 goarch: amd64
 pkg: github.com/philipdexter/neolite
-BenchmarkLazy-4            21764             54845 ns/op           33408 B/op          3 allocs/op
-BenchmarkEager-4           22674             53174 ns/op           32832 B/op          3 allocs/op
-BenchmarkEagerChan-4        7064            252803 ns/op           38511 B/op          9 allocs/op
+BenchmarkLazy-4        	     716	   1710507 ns/op	 1180998 B/op	      20 allocs/op
+BenchmarkEager-4       	     718	   1756687 ns/op	  983232 B/op	       9 allocs/op
+BenchmarkEagerChan-4   	     188	   6517803 ns/op	 1000291 B/op	      27 allocs/op
 ```
 
 ## layout

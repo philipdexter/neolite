@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	storage.Init(1000)
+	storage.FromFile("data.dat")
 
 	lazy.Init()
 	lazy.InitData(storage.GetData())

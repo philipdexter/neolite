@@ -1,0 +1,16 @@
+version: "0.5"
+
+runtimes:
+  sh:
+    command: ["sh", "?"]
+    extensions: ["sh"]
+
+
+recipes:
+  run:
+    runtime: "sh"
+    script: "go build && ./neolite"
+
+  bench:
+    runtime: "sh"
+    script: "go test -bench=. -benchmem"

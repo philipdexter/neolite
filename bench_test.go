@@ -7,6 +7,7 @@ import (
 	"github.com/philipdexter/neolite/lib/query/eager"
 	"github.com/philipdexter/neolite/lib/query/eagerchan"
 	"github.com/philipdexter/neolite/lib/query/lazy"
+	"github.com/philipdexter/neolite/lib/query/lazyfused"
 	"github.com/philipdexter/neolite/lib/storage"
 )
 
@@ -48,6 +49,37 @@ func BenchmarkLazy(b *testing.B) {
 		b.StartTimer()
 
 		lazy.Run()
+	}
+}
+
+func BenchmarkLazyFused(b *testing.B) {
+	b.StopTimer()
+
+	storage.Init(numNodes)
+	lazyfused.InitData(storage.GetData())
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		lazyfused.Init()
+		lazyfused.SubmitQuery(
+			lazyfused.Pipeline(
+				lazyfused.FilterPipe(filterFunc),
+				lazyfused.AccumPipe(),
+			))
+		lazyfused.SubmitQuery(
+			lazyfused.Pipeline(
+				lazyfused.FilterPipe(filterFunc),
+				lazyfused.AccumPipe(),
+			))
+		lazyfused.SubmitQuery(
+			lazyfused.Pipeline(
+				lazyfused.FilterPipe(filterFunc),
+				lazyfused.AccumPipe(),
+			))
+		b.StartTimer()
+
+		lazyfused.Run()
 	}
 }
 

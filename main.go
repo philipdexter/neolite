@@ -7,6 +7,7 @@ import (
 	"github.com/philipdexter/neolite/lib/query/eager"
 	"github.com/philipdexter/neolite/lib/query/eagerchan"
 	"github.com/philipdexter/neolite/lib/query/lazy"
+	"github.com/philipdexter/neolite/lib/query/lazyfused"
 	"github.com/philipdexter/neolite/lib/storage"
 )
 
@@ -20,6 +21,9 @@ func main() {
 
 	eagerchan.InitData(storage.GetData())
 
+	lazyfused.Init()
+	lazyfused.InitData(storage.GetData())
+
 	filterFunc := func(n storage.Node) bool {
 		i, _ := strconv.ParseInt(n.Label, 10, 32)
 		return i%2 == 0
@@ -30,6 +34,17 @@ func main() {
 			lazy.ScanAllPipe(),
 			lazy.FilterPipe(filterFunc),
 			lazy.AccumPipe(),
+		))
+
+	lazyfused.SubmitQuery(
+		lazyfused.Pipeline(
+			lazyfused.FilterPipe(filterFunc),
+			lazyfused.AccumPipe(),
+		))
+	lazyfused.SubmitQuery(
+		lazyfused.Pipeline(
+			lazyfused.FilterPipe(filterFunc),
+			lazyfused.AccumPipe(),
 		))
 
 	eagerQuery :=
@@ -54,4 +69,7 @@ func main() {
 
 	fmt.Println("lazy")
 	fmt.Println(lazy.Run())
+
+	fmt.Println("lazyfuzed")
+	fmt.Println(lazyfused.Run())
 }

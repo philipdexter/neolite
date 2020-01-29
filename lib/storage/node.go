@@ -63,10 +63,20 @@ func (e notFoundError) Error() string {
 	return "not found"
 }
 
-func (n *Node) findProp(name string) (string, error) {
+func (n *Node) FindProp(name string) (string, error) {
 	for prop := n.firstProp; prop != nil; prop = prop.next {
 		if prop.name == name {
 			return prop.val, nil
+		}
+	}
+
+	return "", notFoundError{}
+}
+
+func (n *Node) FindFirstRelTypeTo(to *Node) (string, error) {
+	for rel := n.firstRel; rel != nil; rel = rel.fromNext {
+		if rel.to == to {
+			return rel.Typ, nil
 		}
 	}
 

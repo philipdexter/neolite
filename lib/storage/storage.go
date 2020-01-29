@@ -43,7 +43,7 @@ const (
 // int propName propVal
 // ...
 // RELS
-// int int
+// int int type
 // ...
 func FromFile(file string) error {
 	f, err := os.Open(file)
@@ -89,18 +89,34 @@ func FromFile(file string) error {
 		if mode == modeNodes {
 			var i int
 			var label string
-			fmt.Println(s)
 			_, err := fmt.Sscanf(s, "%d %s", &i, &label)
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("got %v and %v\n", i, label)
 			node := NewNode(label)
 			_data.Data = append(_data.Data, node)
 			nodeMap[i] = newNodeIndex
 			newNodeIndex++
+		} else if mode == modeProps {
+			var i int
+			var propName string
+			var propVal string
+			_, err := fmt.Sscanf(s, "%d %s %s", &i, &propName, &propVal)
+			if err != nil {
+				panic(err)
+			}
+			_data.Data[nodeMap[i]].SetProperty(propName, propVal)
+		} else if mode == modeRels {
+			var from int
+			var to int
+			var typ string
+			_, err := fmt.Sscanf(s, "%d %d %s", &from, &to, &typ)
+			if err != nil {
+				panic(err)
+			}
+			_data.Data[nodeMap[from]].AddRelationship(&_data.Data[nodeMap[to]], typ)
 		} else {
-			panic("not implemented")
+			panic("invalid mode")
 		}
 	}
 	if e != nil {

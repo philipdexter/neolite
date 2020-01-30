@@ -6,7 +6,7 @@ import (
 	"testing/quick"
 )
 
-func TestSetProperty(t *testing.T) {
+func TestNode(t *testing.T) {
 	n := NewNode("label")
 
 	f := func(name, val string) bool {

@@ -12,8 +12,9 @@ type result struct {
 
 type pipeResult = []storage.Node
 
+// RunQuery runs a single pipeline
 func RunQuery(pipeline *pipeline) result {
-	return pipeline.Run()
+	return pipeline.run()
 }
 
 type pipeline struct {
@@ -21,22 +22,22 @@ type pipeline struct {
 	pos   int
 }
 
-func (p pipeline) Run() result {
-	return result{p.pipes[len(p.pipes)-1].Run(p, len(p.pipes)-1)}
+func (p pipeline) run() result {
+	return result{p.pipes[len(p.pipes)-1].run(p, len(p.pipes)-1)}
 }
 
 type pipe interface {
-	Run(pipeline pipeline, pos int) pipeResult
+	run(pipeline pipeline, pos int) pipeResult
 }
 
 type accumPipe struct {
 }
 
-func (p *accumPipe) Run(pipeline pipeline, pos int) pipeResult {
+func (p *accumPipe) run(pipeline pipeline, pos int) pipeResult {
 	res := make([]storage.Node, 0, len(_data.Data))
 
 	for {
-		x := pipeline.pipes[pos-1].Run(pipeline, pos-1)
+		x := pipeline.pipes[pos-1].run(pipeline, pos-1)
 		if x == nil {
 			break
 		}
@@ -51,7 +52,7 @@ type scanAllPipe struct {
 	buf []storage.Node
 }
 
-func (p *scanAllPipe) Run(pipeline pipeline, pos int) pipeResult {
+func (p *scanAllPipe) run(pipeline pipeline, pos int) pipeResult {
 	if p.buf == nil {
 		p.buf = make([]storage.Node, 1, 1)
 	}
@@ -69,39 +70,47 @@ type filterPipe struct {
 	buf      []storage.Node
 }
 
-func (p *filterPipe) Run(pipeline pipeline, pos int) pipeResult {
+func (p *filterPipe) run(pipeline pipeline, pos int) pipeResult {
 	if p.buf == nil {
 		p.buf = make([]storage.Node, 1, 1)
 	}
 
-	x := pipeline.pipes[pos-1].Run(pipeline, pos-1)
+	x := pipeline.pipes[pos-1].run(pipeline, pos-1)
 	for {
 		if x == nil || p.filterOn(x[0]) {
 			break
 		}
-		x = pipeline.pipes[pos-1].Run(pipeline, pos-1)
+		x = pipeline.pipes[pos-1].run(pipeline, pos-1)
 	}
 	return x
 }
 
+// Pipeline creates a pipeline from pipes
 func Pipeline(pipes ...pipe) pipeline {
 	return pipeline{pipes, 0}
 }
 
+// ScanAllPipe creates a pipe
+// which scans all nodes of the graph sequentially
 func ScanAllPipe() pipe {
 	return &scanAllPipe{}
 }
 
+// FilterPipe creates a pipe
+// which filters its input by the provided function
 func FilterPipe(f func(storage.Node) bool) pipe {
 	return &filterPipe{
 		filterOn: f,
 	}
 }
 
+// AccumPipe creates a pipe
+// which accumulates its input into an array
 func AccumPipe() pipe {
 	return &accumPipe{}
 }
 
+// InitData sets the data which the lazy processing engine will use
 func InitData(data *storage.Data) {
 	_data = data
 }

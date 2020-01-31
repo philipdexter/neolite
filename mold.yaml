@@ -14,3 +14,7 @@ recipes:
   bench:
     runtime: "sh"
     script: "go test -bench=. -benchmem"
+
+  test:
+    runtime: "sh"
+    script: "go test ./..."

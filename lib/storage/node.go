@@ -1,49 +1,49 @@
 package storage
 
-type nodeId = int
-type propId = int
-type relId = int
+type nodeID = int
+type propID = int
+type relID = int
 
-const noId = -1
+const noID = -1
 
 // Node is a label with relationship and property linked lists
 type Node struct {
 	Label     string
-	firstProp propId
-	firstRel  relId
+	firstProp propID
+	firstRel  relID
 }
 
 // Relationship is a type, a from and to node, and are inside linked lists of
 // relationships for from and to nodes
 type Relationship struct {
 	Typ      string
-	from     nodeId
-	to       nodeId
-	fromNext relId
-	toNext   relId
+	from     nodeID
+	to       nodeID
+	fromNext relID
+	toNext   relID
 }
 
 // Property is a name, value, and forms a linked list
 type Property struct {
 	name string
 	val  string
-	next propId
+	next propID
 }
 
 // InsertNode creates a node with a given label
 // and inserts it into the graph
-func InsertNode(label string) nodeId {
+func InsertNode(label string) nodeID {
 	n := Node{
 		Label:     label,
-		firstProp: noId,
-		firstRel:  noId,
+		firstProp: noID,
+		firstRel:  noID,
 	}
 	_nodes = append(_nodes, n)
 	return len(_nodes) - 1
 }
 
 // SetProperty creates a property with a name and val for a node
-func SetProperty(n nodeId, name, val string) {
+func SetProperty(n nodeID, name, val string) {
 	prop := Property{
 		name: name,
 		val:  val,
@@ -54,7 +54,7 @@ func SetProperty(n nodeId, name, val string) {
 }
 
 // AddRelationship creats a relationship from node to to with a given type
-func AddRelationship(from nodeId, to nodeId, typ string) {
+func AddRelationship(from nodeID, to nodeID, typ string) {
 	rel := Relationship{
 		Typ:      typ,
 		from:     from,
@@ -75,8 +75,9 @@ func (e notFoundError) Error() string {
 	return "not found"
 }
 
-func FindProp(n nodeId, name string) (string, error) {
-	for prop := _nodes[n].firstProp; prop != noId; prop = _props[prop].next {
+// FindProp returns the val of a property given a name for a node
+func FindProp(n nodeID, name string) (string, error) {
+	for prop := _nodes[n].firstProp; prop != noID; prop = _props[prop].next {
 		if _props[prop].name == name {
 			return _props[prop].val, nil
 		}
@@ -85,8 +86,10 @@ func FindProp(n nodeId, name string) (string, error) {
 	return "", notFoundError{}
 }
 
-func FindFirstRelTypeTo(n nodeId, to nodeId) (string, error) {
-	for rel := _nodes[n].firstRel; rel != noId; rel = _rels[rel].fromNext {
+// FindFirstRelTypeTo finds the type of the first relationship
+// from n to to
+func FindFirstRelTypeTo(n nodeID, to nodeID) (string, error) {
+	for rel := _nodes[n].firstRel; rel != noID; rel = _rels[rel].fromNext {
 		if _rels[rel].to == to {
 			return _rels[rel].Typ, nil
 		}

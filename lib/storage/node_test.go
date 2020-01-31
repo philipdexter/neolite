@@ -12,7 +12,7 @@ func TestNode(t *testing.T) {
 	n := InsertNode("label")
 
 	f := func(name, val string) bool {
-		_nodes[n].firstProp = noId
+		_nodes[n].firstProp = noID
 		SetProperty(n, name, val)
 		v, err := FindProp(n, name)
 		if err != nil {

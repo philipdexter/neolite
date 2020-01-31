@@ -10,18 +10,24 @@ var _nodes []Node
 var _props []Property
 var _rels []Relationship
 
+// Reset removes all nodes, props, and relationships, and sets their storage to nil
 func Reset() {
 	_nodes = nil
 	_props = nil
 	_rels = nil
 }
 
+// Nodes gets the graph nodes
 func Nodes() []Node {
 	return _nodes
 }
+
+// Props gets the graph properties
 func Props() []Property {
 	return _props
 }
+
+// Rels gets the graph relationships
 func Rels() []Relationship {
 	return _rels
 }
@@ -96,8 +102,8 @@ func FromFile(file string) error {
 			if err != nil {
 				panic(err)
 			}
-			nodeId := InsertNode(label)
-			nodeMap[i] = nodeId
+			nodeID := InsertNode(label)
+			nodeMap[i] = nodeID
 		} else if mode == modeProps {
 			var i int
 			var propName string

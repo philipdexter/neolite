@@ -4,29 +4,34 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 )
 
-// Data is an array of nodes
-type Data struct {
-	Data []Node
+var _nodes []Node
+var _props []Property
+var _rels []Relationship
+
+func Reset() {
+	_nodes = nil
+	_props = nil
+	_rels = nil
 }
 
-var _data Data
-
-// GetData returns the singleton data
-func GetData() *Data {
-	return &_data
+func Nodes() []Node {
+	return _nodes
+}
+func Props() []Property {
+	return _props
+}
+func Rels() []Relationship {
+	return _rels
 }
 
-// Init initializes the singleton data with a size
-func Init(size int) {
-	_data = Data{
-		make([]Node, size),
-	}
-	for i := 0; i < size; i++ {
-		_data.Data[i] = NewNode(strconv.Itoa(i))
-	}
+const initCap = 1000
+
+func init() {
+	_nodes = make([]Node, 0, initCap)
+	_props = make([]Property, 0, initCap)
+	_rels = make([]Relationship, 0, initCap)
 }
 
 const (
@@ -46,6 +51,10 @@ const (
 // int int type
 // ...
 func FromFile(file string) error {
+	if len(_nodes) > 0 || len(_props) > 0 || len(_rels) > 0 {
+		panic("cannot call FromFile when data exists")
+	}
+
 	f, err := os.Open(file)
 	if err != nil {
 		fmt.Printf("could not read file %v\n", file)
@@ -64,17 +73,11 @@ func FromFile(file string) error {
 		return string(l), err
 	}
 
-	_data = Data{
-		make([]Node, 0, 100),
-	}
-
 	mode := modeNodes
-	newNodeIndex := 0
 	nodeMap := make(map[int]int)
 
 	s, e := getLine()
 	for ; e == nil; s, e = getLine() {
-		fmt.Println(s)
 		if s == "NODES" {
 			mode = modeNodes
 			continue
@@ -93,10 +96,8 @@ func FromFile(file string) error {
 			if err != nil {
 				panic(err)
 			}
-			node := NewNode(label)
-			_data.Data = append(_data.Data, node)
-			nodeMap[i] = newNodeIndex
-			newNodeIndex++
+			nodeId := InsertNode(label)
+			nodeMap[i] = nodeId
 		} else if mode == modeProps {
 			var i int
 			var propName string
@@ -105,7 +106,7 @@ func FromFile(file string) error {
 			if err != nil {
 				panic(err)
 			}
-			_data.Data[nodeMap[i]].SetProperty(propName, propVal)
+			SetProperty(nodeMap[i], propName, propVal)
 		} else if mode == modeRels {
 			var from int
 			var to int
@@ -114,7 +115,7 @@ func FromFile(file string) error {
 			if err != nil {
 				panic(err)
 			}
-			_data.Data[nodeMap[from]].AddRelationship(&_data.Data[nodeMap[to]], typ)
+			AddRelationship(nodeMap[from], nodeMap[to], typ)
 		} else {
 			panic("invalid mode")
 		}
@@ -128,5 +129,7 @@ func FromFile(file string) error {
 
 // Print pretty prints the data
 func Print() {
-	fmt.Println(_data.Data)
+	fmt.Println(_nodes)
+	fmt.Println(_props)
+	fmt.Println(_rels)
 }

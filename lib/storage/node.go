@@ -1,59 +1,71 @@
 package storage
 
+type nodeId = int
+type propId = int
+type relId = int
+
+const noId = -1
+
 // Node is a label with relationship and property linked lists
 type Node struct {
 	Label     string
-	firstRel  *Relationship
-	firstProp *Property
+	firstProp propId
+	firstRel  relId
 }
 
 // Relationship is a type, a from and to node, and are inside linked lists of
 // relationships for from and to nodes
 type Relationship struct {
 	Typ      string
-	from     *Node
-	to       *Node
-	fromNext *Relationship
-	toNext   *Relationship
+	from     nodeId
+	to       nodeId
+	fromNext relId
+	toNext   relId
 }
 
 // Property is a name, value, and forms a linked list
 type Property struct {
 	name string
 	val  string
-	next *Property
+	next propId
 }
 
-// NewNode creates a node with a given label
-func NewNode(label string) Node {
-	return Node{
-		Label: label,
+// InsertNode creates a node with a given label
+// and inserts it into the graph
+func InsertNode(label string) nodeId {
+	n := Node{
+		Label:     label,
+		firstProp: noId,
+		firstRel:  noId,
 	}
+	_nodes = append(_nodes, n)
+	return len(_nodes) - 1
 }
 
 // SetProperty creates a property with a name and val for a node
-func (n *Node) SetProperty(name, val string) {
+func SetProperty(n nodeId, name, val string) {
 	prop := Property{
 		name: name,
 		val:  val,
-		next: n.firstProp,
+		next: _nodes[n].firstProp,
 	}
-
-	n.firstProp = &prop
+	_props = append(_props, prop)
+	_nodes[n].firstProp = len(_props) - 1
 }
 
 // AddRelationship creats a relationship from node to to with a given type
-func (n *Node) AddRelationship(to *Node, typ string) {
+func AddRelationship(from nodeId, to nodeId, typ string) {
 	rel := Relationship{
 		Typ:      typ,
-		from:     n,
+		from:     from,
 		to:       to,
-		fromNext: n.firstRel,
-		toNext:   to.firstRel,
+		fromNext: _nodes[from].firstRel,
+		toNext:   _nodes[to].firstRel,
 	}
+	_rels = append(_rels, rel)
 
-	n.firstRel = &rel
-	to.firstRel = &rel
+	_nodes[from].firstRel = len(_rels) - 1
+	_nodes[to].firstRel = len(_rels) - 1
 }
 
 type notFoundError struct {
@@ -63,20 +75,20 @@ func (e notFoundError) Error() string {
 	return "not found"
 }
 
-func (n *Node) FindProp(name string) (string, error) {
-	for prop := n.firstProp; prop != nil; prop = prop.next {
-		if prop.name == name {
-			return prop.val, nil
+func FindProp(n nodeId, name string) (string, error) {
+	for prop := _nodes[n].firstProp; prop != noId; prop = _props[prop].next {
+		if _props[prop].name == name {
+			return _props[prop].val, nil
 		}
 	}
 
 	return "", notFoundError{}
 }
 
-func (n *Node) FindFirstRelTypeTo(to *Node) (string, error) {
-	for rel := n.firstRel; rel != nil; rel = rel.fromNext {
-		if rel.to == to {
-			return rel.Typ, nil
+func FindFirstRelTypeTo(n nodeId, to nodeId) (string, error) {
+	for rel := _nodes[n].firstRel; rel != noId; rel = _rels[rel].fromNext {
+		if _rels[rel].to == to {
+			return _rels[rel].Typ, nil
 		}
 	}
 

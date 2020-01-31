@@ -4,8 +4,6 @@ import (
 	"github.com/philipdexter/neolite/lib/storage"
 )
 
-var _data *storage.Data
-
 type result struct {
 	results []storage.Node
 }
@@ -34,7 +32,7 @@ type accumPipe struct {
 }
 
 func (p *accumPipe) run(pipeline pipeline, pos int) pipeResult {
-	res := make([]storage.Node, 0, len(_data.Data))
+	res := make([]storage.Node, 0, len(storage.Nodes()))
 
 	for {
 		x := pipeline.pipes[pos-1].run(pipeline, pos-1)
@@ -56,8 +54,8 @@ func (p *scanAllPipe) run(pipeline pipeline, pos int) pipeResult {
 	if p.buf == nil {
 		p.buf = make([]storage.Node, 1, 1)
 	}
-	if len(_data.Data) > p.pos {
-		x := _data.Data[p.pos]
+	if len(storage.Nodes()) > p.pos {
+		x := storage.Nodes()[p.pos]
 		p.pos++
 		p.buf[0] = x
 		return p.buf
@@ -108,9 +106,4 @@ func FilterPipe(f func(storage.Node) bool) pipe {
 // which accumulates its input into an array
 func AccumPipe() pipe {
 	return &accumPipe{}
-}
-
-// InitData sets the data which the lazy processing engine will use
-func InitData(data *storage.Data) {
-	_data = data
 }

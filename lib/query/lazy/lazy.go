@@ -8,8 +8,6 @@ import (
 	"github.com/philipdexter/neolite/lib/storage"
 )
 
-var _data *storage.Data
-
 const maxAllowed = 100
 
 const (
@@ -82,7 +80,7 @@ type accumPipe struct {
 
 func (p *accumPipe) run(allowed int, pipeline pipeline, pos int) *result {
 	if p.result.results == nil {
-		p.result.results = make([]storage.Node, 0, len(_data.Data))
+		p.result.results = make([]storage.Node, 0, len(storage.Nodes()))
 	}
 	res := pipeline.pipes[pos-1].run(allowed, pipeline, pos-1)
 	p.result.results = append(p.result.results, res.results...)
@@ -105,12 +103,12 @@ func (p *scanAllPipe) run(allowed int, pipeline pipeline, pos int) *result {
 		p.buf = p.buf[:0]
 	}
 	end := p.pos + allowed
-	for ; p.pos < end && p.pos < len(_data.Data); p.pos++ {
-		p.buf = append(p.buf, _data.Data[p.pos])
+	for ; p.pos < end && p.pos < len(storage.Nodes()); p.pos++ {
+		p.buf = append(p.buf, storage.Nodes()[p.pos])
 	}
 
 	status := statusNotDone
-	if p.pos == len(_data.Data) {
+	if p.pos == len(storage.Nodes()) {
 		status = statusDone
 	}
 
@@ -194,9 +192,4 @@ func Print() {
 func Init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	_shadow = shadow{make([]*pipeline, 0)}
-}
-
-// InitData sets the data which the lazy processing engine will use
-func InitData(data *storage.Data) {
-	_data = data
 }

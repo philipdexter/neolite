@@ -7,12 +7,14 @@ import (
 )
 
 func TestNode(t *testing.T) {
-	n := NewNode("label")
+	assert := assert.New(t)
+
+	n := InsertNode("label")
 
 	f := func(name, val string) bool {
-		n.firstProp = nil
-		n.SetProperty(name, val)
-		v, err := n.FindProp(name)
+		_nodes[n].firstProp = noId
+		SetProperty(n, name, val)
+		v, err := FindProp(n, name)
 		if err != nil {
 			return false
 		}
@@ -23,14 +25,14 @@ func TestNode(t *testing.T) {
 		t.Error(err)
 	}
 
-	n2 := NewNode("label2")
+	n2 := InsertNode("label2")
 
-	n.AddRelationship(&n2, "type 1")
-	n2.AddRelationship(&n, "type 2")
-	typ, err := n.FindFirstRelTypeTo(&n2)
-	assert.Nil(t, err)
-	assert.Equal(t, typ, "type 1")
-	typ, err = n2.FindFirstRelTypeTo(&n)
-	assert.Nil(t, err)
-	assert.Equal(t, typ, "type 2")
+	AddRelationship(n, n2, "type 1")
+	AddRelationship(n2, n, "type 2")
+	typ, err := FindFirstRelTypeTo(n, n2)
+	assert.Nil(err)
+	assert.Equal(typ, "type 1")
+	typ, err = FindFirstRelTypeTo(n2, n)
+	assert.Nil(err)
+	assert.Equal(typ, "type 2")
 }

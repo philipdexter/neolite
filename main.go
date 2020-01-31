@@ -15,14 +15,8 @@ func main() {
 	storage.FromFile("data.dat")
 
 	lazy.Init()
-	lazy.InitData(storage.GetData())
-
-	eager.InitData(storage.GetData())
-
-	eagerchan.InitData(storage.GetData())
 
 	lazyfused.Init()
-	lazyfused.InitData(storage.GetData())
 
 	filterFunc := func(n storage.Node) bool {
 		i, _ := strconv.ParseInt(n.Label, 10, 32)

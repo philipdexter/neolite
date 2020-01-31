@@ -21,8 +21,8 @@ var filterFunc = func(n storage.Node) bool {
 func BenchmarkLazy(b *testing.B) {
 	b.StopTimer()
 
-	storage.Init(numNodes)
-	lazy.InitData(storage.GetData())
+	storage.Reset()
+	storage.FromFile("data.dat")
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -55,8 +55,8 @@ func BenchmarkLazy(b *testing.B) {
 func BenchmarkLazyFused(b *testing.B) {
 	b.StopTimer()
 
-	storage.Init(numNodes)
-	lazyfused.InitData(storage.GetData())
+	storage.Reset()
+	storage.FromFile("data.dat")
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -85,8 +85,9 @@ func BenchmarkLazyFused(b *testing.B) {
 
 func BenchmarkEager(b *testing.B) {
 	b.StopTimer()
-	storage.Init(numNodes)
-	eager.InitData(storage.GetData())
+
+	storage.Reset()
+	storage.FromFile("data.dat")
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -119,8 +120,9 @@ func BenchmarkEager(b *testing.B) {
 
 func BenchmarkEagerChan(b *testing.B) {
 	b.StopTimer()
-	storage.Init(numNodes)
-	eagerchan.InitData(storage.GetData())
+
+	storage.Reset()
+	storage.FromFile("data.dat")
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {

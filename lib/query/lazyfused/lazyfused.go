@@ -2,8 +2,6 @@ package lazyfused
 
 import (
 	"fmt"
-	"math/rand"
-	"time"
 
 	"github.com/philipdexter/neolite/lib/storage"
 )
@@ -199,6 +197,5 @@ func Print() {
 
 // Init initializes the lazy processing engine
 func Init() {
-	rand.Seed(time.Now().UTC().UnixNano())
 	_shadow = shadow{make([]*pipeline, 0)}
 }

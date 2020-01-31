@@ -44,7 +44,7 @@ func step() result {
 		return result{make([]storage.Node, 0), statusDone, 0}
 	}
 
-	randPos := rand.Int31n(int32(len(_shadow.items)))
+	randPos := random.Int31n(int32(len(_shadow.items)))
 	pipeline := _shadow.items[randPos]
 	allowed := maxAllowed
 	if randPos > 0 {
@@ -188,8 +188,10 @@ func Print() {
 	}
 }
 
+var random *rand.Rand
+
 // Init initializes the lazy processing engine
 func Init() {
-	rand.Seed(time.Now().UTC().UnixNano())
+	random = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 	_shadow = shadow{make([]*pipeline, 0)}
 }

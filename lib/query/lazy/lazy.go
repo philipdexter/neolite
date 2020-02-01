@@ -74,6 +74,40 @@ type pipe interface {
 	run(allowed int, pipeline pipeline, pos int) *result
 }
 
+type limitPipe struct {
+	limit         int
+	result        result
+}
+
+func (p *limitPipe) run(allowed int, pipeline pipeline, pos int) *result {
+	if p.result.results == nil {
+		p.result.results = make([]storage.Node, 0, p.limit)
+	}
+	if p.limit < allowed {
+		allowed = p.limit
+	}
+	res := pipeline.pipes[pos-1].run(allowed, pipeline, pos-1)
+
+	remaining := p.limit - len(p.result.results)
+	if remaining >= len(p.result.results) {
+		p.result.results = append(p.result.results, res.results...)
+	} else {
+		p.result.results = append(p.result.results, res.results[:remaining]...)
+	}
+
+	if len(p.result.results) < p.limit {
+		p.result.status = res.status
+	} else if len(p.result.results) == p.limit {
+		p.result.status = statusDone
+	} else {
+		panic("len(p.result.results) > p.limit")
+	}
+
+	p.result.pos = res.pos
+
+	return &p.result
+}
+
 type accumPipe struct {
 	result result
 }
@@ -175,6 +209,15 @@ func FilterPipe(f func(storage.Node) bool) pipe {
 // which accumulates its input into an array
 func AccumPipe() pipe {
 	return &accumPipe{}
+}
+
+// LimitPipe creates a pipe
+// which accumulates at most n items
+// of its input into an array
+func LimitPipe(n int) pipe {
+	return &limitPipe{
+		limit: n,
+	}
 }
 
 // Print prints out the state of the lazy processing engine

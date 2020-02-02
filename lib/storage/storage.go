@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 var _nodes []Node
@@ -67,13 +68,35 @@ func FromFile(file string) error {
 		os.Exit(1)
 	}
 	r := bufio.NewReader(f)
+	return fromReader(r)
+}
+
+// FromString loads data from a string with the syntax
+// NODES
+// int label
+// ...
+// PROPS
+// int propName propVal
+// ...
+// RELS
+// int int type
+// ...
+func FromString(s string) error {
+	if len(_nodes) > 0 || len(_props) > 0 || len(_rels) > 0 {
+		panic("cannot call FromFile when data exists")
+	}
+
+	return fromReader(bufio.NewReader(strings.NewReader(s)))
+}
+
+func fromReader(reader *bufio.Reader) error {
 	getLine := func() (string, error) {
 		var pref = true
 		var err error
 		var l []byte
 		var line []byte
 		for pref && err == nil {
-			line, pref, err = r.ReadLine()
+			line, pref, err = reader.ReadLine()
 			l = append(l, line...)
 		}
 		return string(l), err
@@ -126,7 +149,7 @@ func FromFile(file string) error {
 			panic("invalid mode")
 		}
 	}
-	if e != nil {
+	if e != nil && e.Error() != "EOF" {
 		return e
 	}
 

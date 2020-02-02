@@ -3,6 +3,8 @@ package lazy
 import (
 	"fmt"
 	"math/rand"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/philipdexter/neolite/lib/storage"
@@ -124,6 +126,39 @@ func (p *accumPipe) run(allowed int, pipeline pipeline, pos int) *result {
 	return &p.result
 }
 
+type scanByLabelPipe struct {
+	label  string
+	pos    int
+	buf    []storage.Node
+	result result
+}
+
+func (p *scanByLabelPipe) run(allowed int, pipeline pipeline, pos int) *result {
+	if p.buf == nil {
+		p.buf = make([]storage.Node, 0, maxAllowed)
+	} else {
+		p.buf = p.buf[:0]
+	}
+	end := p.pos + allowed
+	for ; p.pos < end && p.pos < len(storage.Nodes()); p.pos++ {
+		if storage.Nodes()[p.pos].Label == p.label {
+			p.buf = append(p.buf, storage.Nodes()[p.pos])
+		} else {
+			end++
+		}
+	}
+
+	status := statusNotDone
+	if p.pos == len(storage.Nodes()) {
+		status = statusDone
+	}
+
+	p.result.results = p.buf
+	p.result.status = status
+	p.result.pos = p.pos
+	return &p.result
+}
+
 type scanAllPipe struct {
 	pos    int
 	buf    []storage.Node
@@ -197,6 +232,15 @@ func ScanAllPipe() pipe {
 	return &scanAllPipe{}
 }
 
+// ScanByLabelPipe creates a pipe
+// which scans all nodes of the graph sequentially
+// and only keeping those with the set label
+func ScanByLabelPipe(label string) pipe {
+	return &scanByLabelPipe{
+		label: label,
+	}
+}
+
 // FilterPipe creates a pipe
 // which filters its input by the provided function
 func FilterPipe(f func(storage.Node) bool) pipe {
@@ -237,4 +281,57 @@ var random *rand.Rand
 func Init() {
 	random = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 	_shadow = shadow{make([]*pipeline, 0)}
+}
+
+var matchRegexp *regexp.Regexp
+var returnRegexp *regexp.Regexp
+
+func init() {
+	matchRegexp = regexp.MustCompile(`MATCH \(([a-z])(?::([A-Za-z]+))?\)`)
+	returnRegexp = regexp.MustCompile(`RETURN ([a-z])`)
+}
+
+// Query takes a string and builds a pipeline
+// from it
+func Query(query string) pipeline {
+	lines := strings.Split(query, "\n")
+
+	if len(lines) != 2 {
+		panic("query must have one match statement and one return statement")
+	}
+
+	if !strings.HasPrefix(lines[0], "MATCH") {
+		panic("first statement of query must start with MATCH")
+	}
+
+	if !strings.HasPrefix(lines[len(lines)-1], "RETURN") {
+		panic("last statement of query must start with RETURN")
+	}
+
+	matchM := matchRegexp.FindStringSubmatch(lines[0])
+	if len(matchM) != 3 {
+		panic("invalid match statement")
+	}
+	nodeVar := matchM[1]
+	labelSelect := matchM[2]
+
+	matchR := returnRegexp.FindStringSubmatch(lines[len(lines)-1])
+	if len(matchR) != 2 {
+		panic("invalid return statement")
+	}
+	if matchR[1] != nodeVar {
+		panic(fmt.Sprintf("invalid return statement %s %s", nodeVar, lines[1]))
+	}
+
+	pipes := make([]pipe, 0, 2)
+
+	if labelSelect != "" {
+		pipes = append(pipes, ScanByLabelPipe(labelSelect))
+	} else {
+		pipes = append(pipes, ScanAllPipe())
+	}
+
+	pipes = append(pipes, AccumPipe())
+
+	return pipeline{pipes, 0, statusNotDone}
 }

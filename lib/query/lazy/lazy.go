@@ -294,6 +294,8 @@ func init() {
 // Query takes a string and builds a pipeline
 // from it
 func Query(query string) pipeline {
+	// TODO use lexer/parser
+
 	lines := strings.Split(query, "\n")
 
 	if len(lines) != 2 {

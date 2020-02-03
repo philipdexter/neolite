@@ -17,10 +17,11 @@ const (
 	statusNotDone
 )
 
-type result struct {
+type pipeResult struct {
 	results []storage.Node
 	status  int
 	pos     int
+	reqID   RequestID
 }
 
 func isDone() bool {
@@ -33,21 +34,57 @@ func isDone() bool {
 }
 
 // Run runs all submitted queries
-func Run() result {
-	var res result = result{make([]storage.Node, 0), statusDone, 0}
+func Run() {
 	for !isDone() {
-		res = step()
+		res := step()
+		if res.status == statusDone {
+			cr := &ClientResult{
+				Columns: []string{"label"},
+				Rows:    make([][]string, 0, len(res.results)),
+			}
+			for i := 0; i < len(res.results); i++ {
+				cr.Rows = append(cr.Rows, []string{res.results[i].Label})
+			}
+			finishRequest(res.reqID, cr)
+		}
 	}
-	return res
 }
 
-func step() result {
+type ClientResult struct {
+	Columns []string
+	Rows    [][]string
+}
+
+type RequestID = int
+
+var clientCache map[RequestID]*ClientResult
+
+func Claim(reqID RequestID) *ClientResult {
+	cr, ok := clientCache[reqID]
+	if !ok {
+		return nil
+	}
+	return cr
+}
+
+func finishRequest(reqID RequestID, cr *ClientResult) {
+	if _, ok := clientCache[reqID]; ok {
+		panic("duplicate RequestID in clientCache")
+	}
+	clientCache[reqID] = cr
+}
+
+func step() pipeResult {
 	if len(_shadow.items) == 0 {
-		return result{make([]storage.Node, 0), statusDone, 0}
+		return pipeResult{make([]storage.Node, 0), statusDone, 0, 0}
 	}
 
 	randPos := random.Int31n(int32(len(_shadow.items)))
 	pipeline := _shadow.items[randPos]
+	for pipeline.status == statusDone {
+		randPos = (randPos + 1) % int32(len(_shadow.items))
+		pipeline = _shadow.items[randPos]
+	}
 	allowed := maxAllowed
 	if randPos > 0 {
 		allowed = _shadow.items[randPos-1].pos - pipeline.pos
@@ -62,26 +99,29 @@ func step() result {
 	return res
 }
 
+var reqIDCounter = 0
+
 type pipeline struct {
 	pipes  []pipe
 	pos    int
 	status int
+	reqID  RequestID
 }
 
-func (p pipeline) run(allowed int) result {
+func (p pipeline) run(allowed int) pipeResult {
 	return *p.pipes[len(p.pipes)-1].run(allowed, p, len(p.pipes)-1)
 }
 
 type pipe interface {
-	run(allowed int, pipeline pipeline, pos int) *result
+	run(allowed int, pipeline pipeline, pos int) *pipeResult
 }
 
 type limitPipe struct {
 	limit         int
-	result        result
+	result        pipeResult
 }
 
-func (p *limitPipe) run(allowed int, pipeline pipeline, pos int) *result {
+func (p *limitPipe) run(allowed int, pipeline pipeline, pos int) *pipeResult {
 	if p.result.results == nil {
 		p.result.results = make([]storage.Node, 0, p.limit)
 	}
@@ -106,15 +146,16 @@ func (p *limitPipe) run(allowed int, pipeline pipeline, pos int) *result {
 	}
 
 	p.result.pos = res.pos
+	p.result.reqID = pipeline.reqID
 
 	return &p.result
 }
 
 type accumPipe struct {
-	result result
+	result        pipeResult
 }
 
-func (p *accumPipe) run(allowed int, pipeline pipeline, pos int) *result {
+func (p *accumPipe) run(allowed int, pipeline pipeline, pos int) *pipeResult {
 	if p.result.results == nil {
 		p.result.results = make([]storage.Node, 0, len(storage.Nodes()))
 	}
@@ -122,6 +163,7 @@ func (p *accumPipe) run(allowed int, pipeline pipeline, pos int) *result {
 	p.result.results = append(p.result.results, res.results...)
 	p.result.status = res.status
 	p.result.pos = res.pos
+	p.result.reqID = pipeline.reqID
 
 	return &p.result
 }
@@ -130,10 +172,10 @@ type scanByLabelPipe struct {
 	label  string
 	pos    int
 	buf    []storage.Node
-	result result
+	result pipeResult
 }
 
-func (p *scanByLabelPipe) run(allowed int, pipeline pipeline, pos int) *result {
+func (p *scanByLabelPipe) run(allowed int, pipeline pipeline, pos int) *pipeResult {
 	if p.buf == nil {
 		p.buf = make([]storage.Node, 0, maxAllowed)
 	} else {
@@ -162,10 +204,10 @@ func (p *scanByLabelPipe) run(allowed int, pipeline pipeline, pos int) *result {
 type scanAllPipe struct {
 	pos    int
 	buf    []storage.Node
-	result result
+	result pipeResult
 }
 
-func (p *scanAllPipe) run(allowed int, pipeline pipeline, pos int) *result {
+func (p *scanAllPipe) run(allowed int, pipeline pipeline, pos int) *pipeResult {
 	if p.buf == nil {
 		p.buf = make([]storage.Node, 0, maxAllowed)
 	} else {
@@ -192,7 +234,7 @@ type filterPipe struct {
 	buf      []storage.Node
 }
 
-func (p *filterPipe) run(allowed int, pipeline pipeline, pos int) *result {
+func (p *filterPipe) run(allowed int, pipeline pipeline, pos int) *pipeResult {
 	res := pipeline.pipes[pos-1].run(allowed, pipeline, pos-1)
 	if p.buf == nil {
 		p.buf = make([]storage.Node, 0, maxAllowed)
@@ -217,13 +259,17 @@ type shadow struct {
 }
 
 // SubmitQuery queues a query to be processed by Run
-func SubmitQuery(pipeline pipeline) {
+func SubmitQuery(pipeline pipeline) RequestID {
 	_shadow.items = append(_shadow.items, &pipeline)
+
+	return pipeline.reqID
 }
 
 // Pipeline creates a pipeline from pipes
 func Pipeline(pipes ...pipe) pipeline {
-	return pipeline{pipes, 0, statusNotDone}
+	i := reqIDCounter
+	reqIDCounter++
+	return pipeline{pipes, 0, statusNotDone, i}
 }
 
 // ScanAllPipe creates a pipe
@@ -279,16 +325,20 @@ var random *rand.Rand
 
 // Init initializes the lazy processing engine
 func Init() {
-	random = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 	_shadow = shadow{make([]*pipeline, 0)}
+	clientCache = make(map[RequestID]*ClientResult, 0)
 }
 
 var matchRegexp *regexp.Regexp
 var returnRegexp *regexp.Regexp
 
 func init() {
+	random = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
+
 	matchRegexp = regexp.MustCompile(`MATCH \(([a-z])(?::([A-Za-z]+))?\)`)
 	returnRegexp = regexp.MustCompile(`RETURN ([a-z])`)
+
+	Init()
 }
 
 // Query takes a string and builds a pipeline
@@ -324,5 +374,5 @@ func Query(queryString string) pipeline {
 	}
 
 
-	return pipeline{pipes, 0, statusNotDone}
+	return Pipeline(pipes...)
 }

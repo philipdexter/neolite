@@ -62,7 +62,8 @@ func main() {
 	fmt.Println(eagerchan.RunQuery(&eagerchanQuery))
 
 	fmt.Println("lazy")
-	fmt.Println(lazy.Run())
+	lazy.Run()
+	fmt.Println(lazy.Claim(0))
 
 	fmt.Println("lazyfuzed")
 	fmt.Println(lazyfused.Run())

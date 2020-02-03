@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"math/rand"
 	"regexp"
-	"strings"
 	"time"
 
+	"github.com/philipdexter/neolite/lib/query"
 	"github.com/philipdexter/neolite/lib/storage"
 )
 
@@ -293,47 +293,36 @@ func init() {
 
 // Query takes a string and builds a pipeline
 // from it
-func Query(query string) pipeline {
-	// TODO use lexer/parser
-
-	lines := strings.Split(query, "\n")
-
-	if len(lines) != 2 {
-		panic("query must have one match statement and one return statement")
+func Query(queryString string) pipeline {
+	astNodes, err := query.Parse(query.Lex(queryString))
+	if err != nil {
+		panic(err)
 	}
 
-	if !strings.HasPrefix(lines[0], "MATCH") {
-		panic("first statement of query must start with MATCH")
-	}
-
-	if !strings.HasPrefix(lines[len(lines)-1], "RETURN") {
-		panic("last statement of query must start with RETURN")
-	}
-
-	matchM := matchRegexp.FindStringSubmatch(lines[0])
-	if len(matchM) != 3 {
-		panic("invalid match statement")
-	}
-	nodeVar := matchM[1]
-	labelSelect := matchM[2]
-
-	matchR := returnRegexp.FindStringSubmatch(lines[len(lines)-1])
-	if len(matchR) != 2 {
-		panic("invalid return statement")
-	}
-	if matchR[1] != nodeVar {
-		panic(fmt.Sprintf("invalid return statement %s %s", nodeVar, lines[1]))
+	if len(astNodes) != 2 {
+		panic("len(astNodes) != 2")
 	}
 
 	pipes := make([]pipe, 0, 2)
 
-	if labelSelect != "" {
-		pipes = append(pipes, ScanByLabelPipe(labelSelect))
-	} else {
-		pipes = append(pipes, ScanAllPipe())
+	switch astNode := astNodes[0].(type) {
+	case query.Match:
+		if astNode.LabelFilter != "" {
+			pipes = append(pipes, ScanByLabelPipe(astNode.LabelFilter))
+		} else {
+			pipes = append(pipes, ScanAllPipe())
+		}
+	default:
+		panic("first astNode is not a match statement")
 	}
 
-	pipes = append(pipes, AccumPipe())
+	switch astNodes[1].(type) {
+	case query.Return:
+		pipes = append(pipes, AccumPipe())
+	default:
+		panic("second astNode is not a return statement")
+	}
+
 
 	return pipeline{pipes, 0, statusNotDone}
 }

@@ -27,7 +27,7 @@ func init() {
 	nameR = regexp.MustCompile(` |\)|:|\n`)
 }
 
-func lex(s string) []Item {
+func Lex(s string) []Item {
 	items := make([]Item, 0)
 
 	pos := 0
@@ -68,23 +68,23 @@ type AST interface {
 }
 
 type Match struct {
-	nodeName    string
-	labelFilter string
+	NodeName    string
+	LabelFilter string
 }
 
 type Return struct {
-	nodeName string
+	NodeName string
 }
 
 type ParseError struct {
-	msg string
+	Msg string
 }
 
 func (e ParseError) Error() string {
-	return e.msg
+	return e.Msg
 }
 
-func parse(items []Item) ([]AST, error) {
+func Parse(items []Item) ([]AST, error) {
 	astNodes := make([]AST, 0)
 
 	if len(items) < 4 {
@@ -119,8 +119,8 @@ func parse(items []Item) ([]AST, error) {
 	}
 
 	astNodes = append(astNodes, Match{
-		nodeName:    nodeName,
-		labelFilter: labelFilter,
+		NodeName:    nodeName,
+		LabelFilter: labelFilter,
 	})
 
 	retPos := rparenPos + 1
@@ -137,7 +137,7 @@ func parse(items []Item) ([]AST, error) {
 		return astNodes, ParseError{"node name in return statement does not match node name in match statement"}
 	}
 	astNodes = append(astNodes, Return{
-		nodeName: nodeName,
+		NodeName: nodeName,
 	})
 
 	return astNodes, nil

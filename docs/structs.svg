@@ -25,9 +25,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.979899"
-     inkscape:cx="163.37567"
-     inkscape:cy="144.3429"
+     inkscape:zoom="1.4"
+     inkscape:cx="220.87446"
+     inkscape:cy="128.18866"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -54,7 +54,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -101,7 +101,7 @@
          x="32.921917"
          y="18.525"
          style="stroke-width:0.26458332"
-         id="tspan829">*relationship</tspan></text>
+         id="tspan829">relID</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;line-height:1.25;font-family:'Roboto Mono';-inkscape-font-specification:'Roboto Mono';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -117,7 +117,7 @@
          x="68.953789"
          y="18.515503"
          style="stroke-width:0.26458332"
-         id="tspan835">*property</tspan></text>
+         id="tspan835">propID</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 26.458333,8.6041665 V 23.15625"
@@ -177,7 +177,7 @@
          x="29.652422"
          y="40.504314"
          style="stroke-width:0.26458332"
-         id="tspan829-6">*node</tspan></text>
+         id="tspan829-6">nodeID</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;line-height:1.25;font-family:'Roboto Mono';-inkscape-font-specification:'Roboto Mono';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -193,7 +193,7 @@
          x="69.595612"
          y="40.565689"
          style="stroke-width:0.26458332"
-         id="tspan4716">*relationship</tspan></text>
+         id="tspan4716">relID</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 25.834673,30.583482 V 45.135565"
@@ -230,7 +230,7 @@
          x="49.603859"
          y="40.183777"
          style="stroke-width:0.26458332"
-         id="tspan829-6-2">*node</tspan></text>
+         id="tspan829-6-2">nodeID</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 44.733482,30.772472 V 45.324555"
@@ -251,7 +251,7 @@
          x="102.728"
          y="40.38805"
          style="stroke-width:0.26458332"
-         id="tspan4716-9">*relationship</tspan></text>
+         id="tspan4716-9">relID</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 100.29598,30.772472 V 45.324555"
@@ -311,7 +311,7 @@
          x="63.68697"
          y="63.906414"
          style="stroke-width:0.26458332"
-         id="tspan4814">*property</tspan></text>
+         id="tspan4814">propID</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 25.834673,54.395982 V 68.948066"

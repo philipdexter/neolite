@@ -4,10 +4,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/philipdexter/neolite/lib/query/eager"
-	"github.com/philipdexter/neolite/lib/query/eagerchan"
-	"github.com/philipdexter/neolite/lib/query/lazy"
-	"github.com/philipdexter/neolite/lib/query/lazyfused"
+	"github.com/philipdexter/neolite/lib/query/engine/eager"
+	"github.com/philipdexter/neolite/lib/query/engine/eagerchan"
+	"github.com/philipdexter/neolite/lib/query/engine/lazy"
+	"github.com/philipdexter/neolite/lib/query/engine/lazyfused"
 	"github.com/philipdexter/neolite/lib/storage"
 )
 

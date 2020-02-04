@@ -33,7 +33,7 @@ func isDone() bool {
 	return true
 }
 
-// Run runs all submitted queries
+// Run runs all submitted queries to completion
 func Run() {
 	for !isDone() {
 		res := step()
@@ -372,7 +372,6 @@ func Query(queryString string) pipeline {
 	default:
 		panic("second astNode is not a return statement")
 	}
-
 
 	return Pipeline(pipes...)
 }
